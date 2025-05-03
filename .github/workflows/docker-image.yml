@@ -66,7 +66,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}      # 镜像 tag（包括 latest 和日期 tag）
 
       # Step 8: Delete old Docker tags, keep latest 5
-      - name: Clean up old Docker tags (keep last 1)
+      - name: Clean up old Docker tags (keep last 2)
         env:
           DOCKERHUB_USER: ${{ secrets.DOCKERACC }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERPWD }}
