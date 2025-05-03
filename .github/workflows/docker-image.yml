@@ -69,4 +69,4 @@ jobs:
       - name: Clean up old Docker images
         run: |
           # 获取镜像的 ID，并删除除了最新 5 个以外的镜像
-          docker images --filter=reference='${{ env.DOCKERHUB_REPO }}:*' --format "{{.ID}}" | tail -n +6 | xargs docker rmi || true
+          docker images
