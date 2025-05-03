@@ -65,26 +65,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}  # 镜像标签信息（metadata-action 生成）
           tags: ${{ steps.meta.outputs.tags }}      # 镜像 tag（包括 latest 和日期 tag）
 
-      # Step 8: Delete old Docker tags, keep latest 5
-      - name: Clean up old Docker tags (keep last 2)
-        env:
-          DOCKERHUB_USER: ${{ secrets.DOCKERACC }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERPWD }}
-          REPO: ${{ env.DOCKERHUB_REPO }}
+      # 删除多余的旧镜像，保留最近五个
+      - name: Clean up old Docker images
         run: |
-          # Get all tags (excluding 'latest'), sorted by update time
-          TAGS=$(curl -s -u "$DOCKERHUB_USER:$DOCKERHUB_TOKEN" \
-            "https://hub.docker.com/v2/repositories/$REPO/tags/?page_size=100" | \
-            jq -r '.results | map(select(.name != "latest")) | sort_by(.last_updated) | .[].name')
-
-          KEEP=5
-          COUNT=0
-          for TAG in $TAGS; do
-            COUNT=$((COUNT + 1))
-            if [ $COUNT -le $((${KEEP})) ]; then
-              continue
-            fi
-            echo "Deleting old tag: $TAG"
-            curl -s -X DELETE -u "$DOCKERHUB_USER:$DOCKERHUB_TOKEN" \
-              "https://hub.docker.com/v2/repositories/$REPO/tags/$TAG/"
-          done
+          # 获取镜像的 ID，并删除除了最新 5 个以外的镜像
+          docker images --filter=reference='${{ env.DOCKERHUB_REPO }}:*' --format "{{.ID}}" | tail -n +6 | xargs docker rmi || true
