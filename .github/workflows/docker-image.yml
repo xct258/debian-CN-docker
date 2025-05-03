@@ -65,8 +65,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}  # 镜像标签信息（metadata-action 生成）
           tags: ${{ steps.meta.outputs.tags }}      # 镜像 tag（包括 latest 和日期 tag）
 
-      # 删除多余的旧镜像，保留最近五个
+      # Step 8: 删除多余的旧镜像，保留最近五个
       - name: Clean up old Docker images
         run: |
-          # 获取镜像的 ID，并删除除了最新 5 个以外的镜像
-          docker images
+          # 获取所有镜像的 ID（按创建时间倒序排列）
+          image_ids=$(docker images --filter=reference='${{ env.DOCKERHUB_REPO }}:*' --format "{{.ID}}")
+          
+          # 判断镜像数量是否超过 5 个
+          image_count=$(echo "$image_ids" | wc -l)
+          
+          if [ "$image_count" -gt 5 ]; then
+            # 保留最新的 5 个镜像，删除其余的
+            echo "$image_ids" | tail -n +6 | while read image_id; do
+              echo "Deleting image: $image_id"
+              docker rmi "$image_id" || true  # 删除镜像，失败不报错
+            done
+          else
+            echo "Not enough images to clean up. Skipping image cleanup."
+          fi
