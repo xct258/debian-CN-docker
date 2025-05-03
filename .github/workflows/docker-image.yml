@@ -21,9 +21,9 @@ jobs:
 
     steps:
       # Step 1: 生成当前日期字符串，用于动态 tag 镜像
-      - name: Get current date
-        id: date
-        run: echo "today=$(date +'%Y-%m-%d_%H-%M')" >> "$GITHUB_OUTPUT"
+      #- name: Get current date
+        #id: date
+        #run: echo "today=$(date +'%Y-%m-%d_%H-%M')" >> "$GITHUB_OUTPUT"
 
       # Step 2: 检出代码仓库内容（必须步骤）
       - name: Checkout repository
@@ -52,7 +52,7 @@ jobs:
           images: ${{ env.DOCKERHUB_REPO }}
           tags: |
             type=raw,value=latest                  # 固定标签 latest
-            type=raw,value=${{ steps.date.outputs.today }}  # 使用日期作为 tag，比如 2025-05-03_00-00
+            #type=raw,value=${{ steps.date.outputs.today }}  # 使用日期作为 tag，比如 2025-05-03_00-00
 
       # Step 7: 构建并推送 Docker 镜像
       - name: Build and push Docker image
@@ -64,22 +64,3 @@ jobs:
           platforms: linux/amd64,linux/arm64        # 同时构建 x86 和 ARM 版本
           labels: ${{ steps.meta.outputs.labels }}  # 镜像标签信息（metadata-action 生成）
           tags: ${{ steps.meta.outputs.tags }}      # 镜像 tag（包括 latest 和日期 tag）
-
-      # Step 8: 删除多余的旧镜像，保留最近五个
-      - name: Clean up old Docker images
-        run: |
-          # 获取所有镜像的 ID（按创建时间倒序排列）
-          image_ids=$(docker images --filter=reference='${{ env.DOCKERHUB_REPO }}:*' --format "{{.ID}}")
-          
-          # 判断镜像数量是否超过 5 个
-          image_count=$(echo "$image_ids" | wc -l)
-          
-          if [ "$image_count" -gt 5 ]; then
-            # 保留最新的 5 个镜像，删除其余的
-            echo "$image_ids" | tail -n +6 | while read image_id; do
-              echo "Deleting image: $image_id"
-              docker rmi "$image_id" || true  # 删除镜像，失败不报错
-            done
-          else
-            echo "Not enough images to clean up. Skipping image cleanup."
-          fi
