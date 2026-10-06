@@ -1,5 +1,4 @@
-# 始终拉取当前最新的 Debian 稳定精简版
-FROM debian:slim
+FROM debian
 
 # 合并环境变量配置
 ENV TZ=Asia/Shanghai \
