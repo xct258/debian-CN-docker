@@ -1,11 +1,18 @@
-# 使用 Debian 作为基础镜像
-FROM debian
+# 始终拉取当前最新的 Debian 稳定精简版
+FROM debian:slim
 
-# 设置中文环境
-RUN apt-get update && apt-get install -y locales tzdata && rm -rf /var/lib/apt/lists/* \
-    # 生成中文 locale
-    && localedef -i zh_CN -c -f UTF-8 -A /usr/share/locale/locale.alias zh_CN.UTF-8
-# 设置环境变量为中文
-ENV LANG=zh_CN.UTF-8
-# 设置时区为上海
-ENV TZ=Asia/Shanghai
+# 合并环境变量配置
+ENV TZ=Asia/Shanghai \
+    LANG=zh_CN.UTF-8 \
+    LANGUAGE=zh_CN:zh \
+    LC_ALL=zh_CN.UTF-8
+
+# 单层完成：无交互安装、时区链接、生成中文编码与缓存清理
+RUN export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends locales tzdata \
+    && sed -i '/zh_CN.UTF-8 UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
