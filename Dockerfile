@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM debian
 
 # 时区
 ENV TZ=Asia/Shanghai
